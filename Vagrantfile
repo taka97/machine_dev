@@ -76,8 +76,16 @@ Vagrant.configure("2") do |config|
   SHELL
 
   config.vm.provision "shell", privileged: false, inline: <<-SHELL
+    # Install docker
     sudo groupadd docker
     sudo usermod -aG docker $USER
+
+    # Install neccessary package
+    ## jq (parse json in command line)
+    sudo apt-get --assume-yes install jq
+
+    # Kubernetes client
+    cd /usr/local/bin && sudo curl -LO "https://dl.k8s.io/release/$(curl -L -s https://dl.k8s.io/release/stable.txt)/bin/linux/amd64/kubectl" && sudo chmod +x kubectl
   SHELL
 
   config.vm.provision "shell", privileged: false, inline: <<-SHELL
