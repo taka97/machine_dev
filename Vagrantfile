@@ -17,7 +17,7 @@ Vagrant.configure("2") do |config|
 
   # Every Vagrant development environment requires a box. You can search for
   # boxes at https://vagrantcloud.com/search.
-  config.vm.box = "ubuntu/focal64"
+  config.vm.box = "bento/ubuntu-22.04"
 
   # Disable automatic box update checking. If you disable this, then
   # boxes will only be checked for updates when the user runs
@@ -38,6 +38,7 @@ Vagrant.configure("2") do |config|
   # Create a private network, which allows host-only access to the machine
   # using a specific IP.
   config.vm.network "private_network", ip: "192.168.56.2"
+  config.vm.network "private_network", ip: "10.0.0.2"
 
   # Create a public network, which generally matched to bridged network.
   # Bridged networks make the machine appear as another physical device on
@@ -48,7 +49,7 @@ Vagrant.configure("2") do |config|
   # the path on the host to the actual folder. The second argument is
   # the path on the guest to mount the folder. And the optional third
   # argument is a set of non-required options.
-  # config.vm.synced_folder "../data", "/vagrant_data"
+  config.vm.synced_folder ".", "/vagrant", disabled: true
 
   # Provider-specific configuration so you can fine-tune various
   # backing providers for Vagrant. These expose provider-specific options.
@@ -56,7 +57,6 @@ Vagrant.configure("2") do |config|
   #
   config.vm.provider "virtualbox" do |vb|
     # Display the VirtualBox GUI when booting the machine
-    vb.gui = true
     vb.name = "dev_machine"
 
     # Customize the amount of memory on the VM:
@@ -76,13 +76,23 @@ Vagrant.configure("2") do |config|
   SHELL
 
   config.vm.provision "shell", privileged: false, inline: <<-SHELL
+    # Temp fix
+    sudo mkdir -m 600 /root/.gnupg
+
     # Install docker
     sudo groupadd docker
     sudo usermod -aG docker $USER
 
+    # Add repository into apt repo
+    sudo gpg --no-default-keyring --keyring /usr/share/keyrings/rmescandon-ubuntu-yq.gpg --keyserver keyserver.ubuntu.com --recv-keys CC86BB64
+    echo "deb [signed-by=/usr/share/keyrings/rmescandon-ubuntu-yq.gpg] https://ppa.launchpadcontent.net/rmescandon/yq/ubuntu/ jammy main" \
+    | sudo tee -a /etc/apt/sources.list.d/rmescandon-ubuntu-yq-jammy.list > /dev/null
+    sudo apt-get update
+
     # Install neccessary package
     ## jq (parse json in command line)
-    sudo apt-get --assume-yes install jq
+    ## yq (parse yaml in command line)
+    sudo apt-get --assume-yes install jq yq
 
     # Kubernetes client
     cd /usr/local/bin && sudo curl -LO "https://dl.k8s.io/release/$(curl -L -s https://dl.k8s.io/release/stable.txt)/bin/linux/amd64/kubectl" && sudo chmod +x kubectl
@@ -98,6 +108,6 @@ Vagrant.configure("2") do |config|
     nvm install 14
     nvm install 16
     nvm install 18
-    nvm alias default 12
+    nvm alias default 16
   SHELL
 end
