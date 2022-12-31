@@ -1,4 +1,5 @@
 #!/bin/bash
+
 VERISON=5.1.34
 FILE_NAME=cqlsh-$VERISON
 TAR_FILE_NAME=$FILE_NAME-bin.tar.gz

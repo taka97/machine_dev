@@ -70,49 +70,8 @@ Vagrant.configure("2") do |config|
   # Enable provisioning with a shell script. Additional provisioners such as
   # Ansible, Chef, Docker, Puppet and Salt are also available. Please see the
   # documentation for more information about their specific syntax and use.
-  config.vm.provision "shell",  inline: <<-SHELL
-    curl -fsSL https://get.docker.com -o get-docker.sh
-    sh ./get-docker.sh
-  SHELL
-
-  config.vm.provision "shell", privileged: false, inline: <<-SHELL
-    # Temp fix
-    sudo mkdir -m 600 /root/.gnupg
-
-    # Install docker
-    sudo groupadd docker
-    sudo usermod -aG docker $USER
-
-    # Add repository into apt repo
-    sudo gpg --no-default-keyring --keyring /usr/share/keyrings/rmescandon-ubuntu-yq.gpg --keyserver keyserver.ubuntu.com --recv-keys CC86BB64
-    echo "deb [signed-by=/usr/share/keyrings/rmescandon-ubuntu-yq.gpg] https://ppa.launchpadcontent.net/rmescandon/yq/ubuntu/ jammy main" \
-    | sudo tee -a /etc/apt/sources.list.d/rmescandon-ubuntu-yq-jammy.list > /dev/null
-
-    curl https://baltocdn.com/helm/signing.asc | gpg --dearmor | sudo tee /usr/share/keyrings/helm.gpg > /dev/null
-    sudo apt-get install apt-transport-https --yes
-    echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/helm.gpg] https://baltocdn.com/helm/stable/debian/ all main" | sudo tee /etc/apt/sources.list.d/helm-stable-debian.list
-
-    sudo apt-get update
-
-    # Install neccessary package
-    ## jq (parse json in command line)
-    ## yq (parse yaml in command line)
-    sudo apt-get --assume-yes install jq yq helm
-
-    # Kubernetes client
-    cd /usr/local/bin && sudo curl -LO "https://dl.k8s.io/release/$(curl -L -s https://dl.k8s.io/release/stable.txt)/bin/linux/amd64/kubectl" && sudo chmod +x kubectl
-  SHELL
-
-  config.vm.provision "shell", privileged: false, inline: <<-SHELL
-    curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.2/install.sh | bash
-    export NVM_DIR="$HOME/.nvm"
-    [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"  # This loads nvm
-    [ -s "$NVM_DIR/bash_completion" ] && \. "$NVM_DIR/bash_completion"
-
-    nvm install 12
-    nvm install 14
-    nvm install 16
-    nvm install 18
-    nvm alias default 16
-  SHELL
+  config.vm.provision "shell", path: "./scripts/install_docker.sh"
+  config.vm.provision "shell", privileged: false, path: "./scripts/install_necessary.sh"
+  config.vm.provision "shell", privileged: false, path: "./scripts/install_nvm.sh"
+  config.vm.provision "shell", privileged: false, path: "./scripts/install_ansible.sh"
 end
